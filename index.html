@@ -388,8 +388,7 @@
     <p class="locked-note">Locked in. Nothing else to press, nothing to change. I'll be there from the first hello.</p>
 
     <div class="share" id="share">
-      <button class="ghost" id="wa" type="button">Send it to Jitendra</button>
-      <button class="ghost" id="copy" type="button">Copy the link</button>
+      <button class="ghost" id="copy" type="button">Copy the date &amp; send it to Jitendra</button>
     </div>
     <p class="sent" id="sent"></p>
   </section>
@@ -714,9 +713,6 @@
       ? 'I picked ' + pretty(iso) + '. That is our whole day. ' + linkFor()
       : 'I said yes. The whole day is yours. ' + linkFor();
   }
-  document.getElementById('wa').addEventListener('click', function(){
-    window.open('https://wa.me/?text=' + encodeURIComponent(shareText()), '_blank');
-  });
   document.getElementById('copy').addEventListener('click', function(){
     var msg = shareText();
     var done = function(){ document.getElementById('sent').textContent = 'Copied. Now send it to him.'; };
