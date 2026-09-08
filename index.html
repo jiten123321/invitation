@@ -257,6 +257,24 @@
     display:flex;
     justify-content:center;
   }
+  .date-field{
+    position:relative;
+    display:block;
+    width:100%;
+    max-width:270px;
+  }
+  .cal-icon{
+    position:absolute;
+    left:17px;
+    top:50%;
+    width:22px;
+    height:22px;
+    margin-top:-11px;
+    color:var(--amber);
+    pointer-events:none;
+  }
+  .cal-icon svg{display:block;width:100%;height:100%}
+
   input[type="date"]{
     font-family:var(--sans);
     font-size:1.05rem;
@@ -264,9 +282,8 @@
     background:rgba(255,255,255,.06);
     border:1px solid rgba(255,255,255,.24);
     border-radius:14px;
-    padding:16px 18px;
+    padding:16px 18px 16px 50px;
     width:100%;
-    max-width:260px;
     min-height:56px;
     text-align:center;
     touch-action:manipulation;
@@ -282,6 +299,10 @@
     opacity:.7;
     cursor:pointer;
   }
+  /* when we can open the picker ourselves, ours is the only calendar shown;
+     the native one stays in place but invisible so it is still tappable */
+  .picker.own-icon input[type="date"]::-webkit-calendar-picker-indicator{opacity:0}
+  .picker.own-icon input[type="date"]{cursor:pointer}
 
   /* ---------- locked ---------- */
   #locked{display:none;text-align:center}
@@ -522,8 +543,21 @@
     </div>
 
     <p class="pickline" id="pickline">Now add the day you want.</p>
-    <div class="picker">
-      <input type="date" id="date" aria-label="Pick the date">
+    <div class="picker" id="picker">
+      <div class="date-field">
+        <span class="cal-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="16" rx="3.2"/>
+            <path d="M3 10.2h18"/>
+            <path d="M8 2.8v4.2M16 2.8v4.2"/>
+            <circle cx="8.4" cy="14.8" r="1.15" fill="currentColor" stroke="none"/>
+            <circle cx="12" cy="14.8" r="1.15" fill="currentColor" stroke="none"/>
+            <circle cx="15.6" cy="14.8" r="1.15" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+        <input type="date" id="date" aria-label="Pick the date">
+      </div>
     </div>
 
     <p class="thedate" id="thedate"></p>
@@ -911,6 +945,15 @@
   input.addEventListener('change', function(){
     if(input.value) setDate(input.value);
   });
+
+  /* where the browser lets us, tapping anywhere on the field opens the
+     calendar, so our own mark is the only one she needs to aim at */
+  if(typeof input.showPicker === 'function'){
+    document.getElementById('picker').classList.add('own-icon');
+    input.addEventListener('click', function(){
+      try{ input.showPicker(); }catch(e){}
+    });
+  }
 
   /* ---------- send it back ---------- */
   function savedISO(){
