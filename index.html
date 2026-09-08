@@ -232,45 +232,6 @@
     100%{opacity:0;transform:translate(-50%,-200%) scale(.8) rotate(10deg)}
   }
 
-  /* ---------- date picker ---------- */
-  #pick{display:none}
-  #pick.show{display:block}
-  .picker{
-    margin-top:28px;
-    display:flex;
-    flex-wrap:wrap;
-    gap:12px;
-    justify-content:center;
-    align-items:center;
-  }
-  input[type="date"]{
-    font-family:var(--sans);
-    font-size:1.05rem;
-    color:var(--cream);
-    background:rgba(255,255,255,.06);
-    border:1px solid rgba(255,255,255,.24);
-    border-radius:14px;
-    padding:16px 18px;
-    min-width:210px;
-    text-align:center;
-  }
-  input[type="date"]:focus{
-    outline:none;
-    border-color:var(--amber);
-    background:rgba(255,255,255,.09);
-  }
-  input[type="date"]::-webkit-calendar-picker-indicator{
-    filter:invert(1);
-    opacity:.7;
-    cursor:pointer;
-  }
-  .error{
-    margin:14px 0 0;
-    font-size:.9rem;
-    color:var(--rose);
-    min-height:1.2em;
-  }
-
   /* ---------- locked ---------- */
   #locked{display:none;text-align:center}
   #locked.show{display:block}
@@ -394,17 +355,6 @@
     <p class="hint" id="hint">The no button is decorative. Take your time with it.</p>
   </section>
 
-  <section class="step" id="pick">
-    <h2>Now pick the day.</h2>
-    <p>Choose a date and press enter. Whatever you pick, I'm keeping free.</p>
-
-    <div class="picker">
-      <input type="date" id="date" aria-label="Pick the date">
-      <button id="enter" class="primary" type="button">Enter</button>
-    </div>
-    <p class="error" id="error" role="alert"></p>
-  </section>
-
   <section class="step" id="locked" aria-live="polite">
     <span class="stamp">It's a date</span>
 
@@ -462,13 +412,9 @@
   var yes   = document.getElementById('yes');
   var hint  = document.getElementById('hint');
   var ask   = document.getElementById('ask');
-  var pick  = document.getElementById('pick');
   var lock  = document.getElementById('locked');
   var span  = document.getElementById('span');
   var note  = document.getElementById('note');
-  var input = document.getElementById('date');
-  var enter = document.getElementById('enter');
-  var error = document.getElementById('error');
 
   /* ---------- the dodging no button ---------- */
   var LINES = [
@@ -708,16 +654,14 @@
     target.setHours(0,0,0,0); now.setHours(0,0,0,0);
     return Math.round((target - now) / 86400000);
   }
-  function todayISO(){
-    var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  }
 
   /* ---------- freeze ---------- */
+  /* iso is optional: saying yes freezes the page on its own. Older links
+     that already carry #d=YYYY-MM-DD still show the date they were sent with. */
   function freeze(iso, celebrate){
-    try{ localStorage.setItem(KEY, iso); }catch(e){}
-    if(location.hash.indexOf('d=') === -1){
-      history.replaceState(null, '', location.pathname + location.search + '#d=' + iso);
+    try{ localStorage.setItem(KEY, iso || 'yes'); }catch(e){}
+    if(location.hash.indexOf('d=') === -1 && location.hash !== '#yes'){
+      history.replaceState(null, '', location.pathname + location.search + (iso ? '#d=' + iso : '#yes'));
     }
 
     if(GIF_URL){
@@ -725,19 +669,24 @@
         '<img src="' + GIF_URL + '" alt="A little kiss, for you">';
     }
 
-    document.getElementById('thedate').textContent = pretty(iso);
-    var n = daysAway(iso);
-    document.getElementById('countdown').textContent =
-      n > 1  ? n + ' days from now.' :
-      n === 1 ? 'Tomorrow.' :
-      n === 0 ? 'That is today.' :
-      'That one already happened. Worth repeating.';
+    var dateEl = document.getElementById('thedate');
+    var countEl = document.getElementById('countdown');
+    if(iso){
+      dateEl.textContent = pretty(iso);
+      var n = daysAway(iso);
+      countEl.textContent =
+        n > 1  ? n + ' days from now.' :
+        n === 1 ? 'Tomorrow.' :
+        n === 0 ? 'That is today.' :
+        'That one already happened. Worth repeating.';
+    }else{
+      dateEl.style.display = 'none';
+      countEl.style.display = 'none';
+    }
 
     span.style.display = 'none';
     note.style.display = 'none';
     ask.style.display  = 'none';
-    pick.classList.remove('show');
-    pick.style.display = 'none';
     lock.classList.add('show');
     if(celebrate){
       burst(200);
@@ -745,46 +694,31 @@
     }
   }
 
-  /* ---------- flow ---------- */
-  yes.addEventListener('click', function(){
-    if(GIF_URL){ var pre = new Image(); pre.src = GIF_URL; }
-    ask.style.display = 'none';
-    span.style.display = 'none';
-    note.style.display = 'none';
-    pick.classList.add('show');
-    burst(120);
-    input.min = todayISO();
-    pick.scrollIntoView({behavior:'smooth', block:'center'});
-    setTimeout(function(){ input.focus(); }, 400);
-  });
-
-  function submit(){
-    if(!input.value){
-      error.textContent = 'Pick a day first, then press enter.';
-      input.focus();
-      return;
-    }
-    error.textContent = '';
-    freeze(input.value, true);
-  }
-  enter.addEventListener('click', submit);
-  input.addEventListener('keydown', function(e){
-    if(e.key === 'Enter'){ e.preventDefault(); submit(); }
-  });
+  /* ---------- flow: yes is the whole flow ---------- */
+  yes.addEventListener('click', function(){ freeze(null, true); });
 
   /* ---------- send it back ---------- */
+  function savedISO(){
+    var v = null;
+    try{ v = localStorage.getItem(KEY); }catch(e){}
+    v = v || (location.hash.match(/d=(\d{4}-\d{2}-\d{2})/) || [])[1];
+    return (v && v !== 'yes') ? v : '';
+  }
   function linkFor(){
-    var iso = localStorage.getItem(KEY) || (location.hash.split('d=')[1] || '');
-    return location.origin + location.pathname + location.search + '#d=' + iso;
+    var iso = savedISO();
+    return location.origin + location.pathname + location.search + (iso ? '#d=' + iso : '#yes');
+  }
+  function shareText(){
+    var iso = savedISO();
+    return iso
+      ? 'I picked ' + pretty(iso) + '. That is our whole day. ' + linkFor()
+      : 'I said yes. The whole day is yours. ' + linkFor();
   }
   document.getElementById('wa').addEventListener('click', function(){
-    var iso = localStorage.getItem(KEY) || (location.hash.split('d=')[1] || '');
-    var msg = 'I picked ' + pretty(iso) + '. That is our whole day. ' + linkFor();
-    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    window.open('https://wa.me/?text=' + encodeURIComponent(shareText()), '_blank');
   });
   document.getElementById('copy').addEventListener('click', function(){
-    var iso = localStorage.getItem(KEY) || (location.hash.split('d=')[1] || '');
-    var msg = 'I picked ' + pretty(iso) + '. ' + linkFor();
+    var msg = shareText();
     var done = function(){ document.getElementById('sent').textContent = 'Copied. Now send it to him.'; };
     if(navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(msg).then(done, done);
@@ -797,15 +731,27 @@
   });
 
   /* ---------- on load ---------- */
+  /* the gif is the payoff, so have it in cache before she taps */
+  if(GIF_URL){ var pre = new Image(); pre.src = GIF_URL; }
+
+  /* typing #reset on an already-frozen page should work too */
+  window.addEventListener('hashchange', function(){
+    if(location.hash === '#reset') location.reload();
+  });
+
   if(location.hash === '#reset'){
     try{ localStorage.removeItem(KEY); }catch(e){}
     history.replaceState(null, '', location.pathname + location.search);
+  }else{
+    var fromLink = (location.hash.match(/d=(\d{4}-\d{2}-\d{2})/) || [])[1];
+    var saidYes  = location.hash === '#yes';
+    var stored = null;
+    try{ stored = localStorage.getItem(KEY); }catch(e){}
+
+    if(fromLink)                          freeze(fromLink, false);
+    else if(saidYes || stored === 'yes')  freeze(null, false);
+    else if(stored)                       freeze(stored, false);
   }
-  var fromLink = (location.hash.match(/d=(\d{4}-\d{2}-\d{2})/) || [])[1];
-  var stored = null;
-  try{ stored = localStorage.getItem(KEY); }catch(e){}
-  var existing = fromLink || stored;
-  if(existing) freeze(existing, false);
 })();
 </script>
 </body>
