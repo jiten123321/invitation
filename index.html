@@ -598,6 +598,8 @@
   var lock  = document.getElementById('locked');
   var span  = document.getElementById('span');
   var note  = document.getElementById('note');
+  /* the opening block: greeting, headline and the line under it */
+  var intro = document.querySelectorAll('.to, h1, .lede');
   var input = document.getElementById('date');
 
   /* ---------- the dodging no button ---------- */
@@ -921,6 +923,8 @@
     if(iso) input.value = iso;
     showDate(iso || '');
 
+    /* once she has said yes the gif is the whole page; nothing above it */
+    for(var k = 0; k < intro.length; k++) intro[k].style.display = 'none';
     span.style.display = 'none';
     note.style.display = 'none';
     ask.style.display  = 'none';
