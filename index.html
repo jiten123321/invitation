@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A whole day, with you</title>
+<style>
+  :root{
+    --night:#150e2b;
+    --night-2:#241645;
+    --amber:#f2b45c;
+    --rose:#e2757f;
+    --lilac:#a98fd6;
+    --cream:#f6ece1;
+    --muted:#b3a2cd;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--night);
+    background-image:
+      radial-gradient(120% 70% at 50% -10%, rgba(242,180,92,.22), transparent 60%),
+      radial-gradient(100% 60% at 50% 110%, rgba(169,143,214,.18), transparent 65%),
+      linear-gradient(180deg,#150e2b 0%,#1c1236 45%,#241645 100%);
+    background-attachment:fixed;
+    color:var(--cream);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+
+  #glitter{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .wrap{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:640px;
+    margin:0 auto;
+    padding:clamp(56px,12vw,110px) 22px 80px;
+  }
+
+  .to{
+    font-size:.86rem;
+    letter-spacing:.06em;
+    color:var(--amber);
+    margin:0 0 20px;
+  }
+  h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(2.4rem,8.4vw,4rem);
+    line-height:1.04;
+    letter-spacing:-.02em;
+    margin:0 0 22px;
+    max-width:12ch;
+  }
+  h1 .arc{
+    display:block;
+    background:linear-gradient(100deg,var(--amber),var(--rose) 55%,var(--lilac));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .lede{
+    font-size:1.06rem;
+    color:var(--muted);
+    max-width:44ch;
+    margin:0;
+  }
+
+  /* ---------- from / to ---------- */
+  .span{
+    margin:clamp(48px,10vw,76px) 0 0;
+    padding-left:30px;
+    position:relative;
+  }
+  .span::before{
+    content:"";
+    position:absolute;
+    left:5px;top:14px;bottom:14px;
+    width:2px;
+    border-radius:2px;
+    background:linear-gradient(180deg,var(--amber),var(--rose) 55%,var(--lilac));
+  }
+  .span .end{position:relative;padding:2px 0}
+  .span .end + .end{margin-top:34px}
+  .span .end::before{
+    content:"";
+    position:absolute;
+    left:-30px;top:14px;
+    width:12px;height:12px;
+    border-radius:50%;
+    background:var(--night-2);
+    border:2px solid var(--amber);
+  }
+  .span .end + .end::before{border-color:var(--lilac)}
+
+  .marker{
+    font-size:.82rem;
+    letter-spacing:.05em;
+    color:var(--amber);
+    margin:0 0 2px;
+  }
+  .end + .end .marker{color:var(--lilac)}
+  .line{
+    font-family:var(--serif);
+    font-size:clamp(1.25rem,4.4vw,1.5rem);
+    line-height:1.3;
+    margin:0;
+    max-width:24ch;
+  }
+
+  .note{
+    margin:34px 0 0;
+    color:var(--muted);
+    max-width:42ch;
+  }
+
+  /* ---------- shared section head ---------- */
+  .step{
+    margin:clamp(48px,10vw,72px) 0 0;
+    text-align:center;
+  }
+  .step h2{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(1.7rem,5.6vw,2.3rem);
+    margin:0 0 6px;
+  }
+  .step > p{
+    margin:0;
+    color:var(--muted);
+    font-size:.98rem;
+  }
+
+  /* ---------- buttons ---------- */
+  button{
+    font-family:var(--sans);
+    font-size:1rem;
+    cursor:pointer;
+    border-radius:999px;
+    transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+  button:focus-visible{
+    outline:2px solid var(--cream);
+    outline-offset:3px;
+  }
+  .primary{
+    border:none;
+    padding:18px 44px;
+    font-size:1.12rem;
+    font-weight:600;
+    color:#2a1608;
+    background:linear-gradient(135deg,var(--amber),#f6cf8e);
+    box-shadow:0 12px 34px rgba(242,180,92,.3);
+  }
+  .primary:hover{transform:translateY(-2px) scale(1.03)}
+  .primary:active{transform:translateY(0) scale(.99)}
+
+  .field{
+    position:relative;
+    min-height:230px;
+    margin-top:26px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  #no{
+    position:absolute;
+    left:50%;
+    top:calc(50% + 74px);
+    transform:translate(-50%,-50%);
+    padding:13px 30px;
+    color:var(--muted);
+    background:transparent;
+    border:1px solid rgba(255,255,255,.22);
+    transition:left .28s cubic-bezier(.34,1.3,.64,1),
+               top .28s cubic-bezier(.34,1.3,.64,1),
+               transform .28s ease, opacity .3s ease;
+    touch-action:none;
+    white-space:nowrap;
+  }
+  .hint{
+    margin:18px 0 0;
+    font-size:.85rem;
+    color:rgba(179,162,205,.65);
+    opacity:0;
+    transition:opacity .5s ease;
+    text-align:center;
+  }
+  .hint.show{opacity:1}
+
+  /* ---------- date picker ---------- */
+  #pick{display:none}
+  #pick.show{display:block}
+  .picker{
+    margin-top:28px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    justify-content:center;
+    align-items:center;
+  }
+  input[type="date"]{
+    font-family:var(--sans);
+    font-size:1.05rem;
+    color:var(--cream);
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.24);
+    border-radius:14px;
+    padding:16px 18px;
+    min-width:210px;
+    text-align:center;
+  }
+  input[type="date"]:focus{
+    outline:none;
+    border-color:var(--amber);
+    background:rgba(255,255,255,.09);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator{
+    filter:invert(1);
+    opacity:.7;
+    cursor:pointer;
+  }
+  .error{
+    margin:14px 0 0;
+    font-size:.9rem;
+    color:var(--rose);
+    min-height:1.2em;
+  }
+
+  /* ---------- locked ---------- */
+  #locked{display:none;text-align:center}
+  #locked.show{display:block}
+
+  .stamp{
+    display:inline-block;
+    padding:12px 24px;
+    border:2px solid var(--rose);
+    border-radius:10px;
+    color:var(--rose);
+    font-family:var(--serif);
+    font-size:1.3rem;
+    transform:rotate(-7deg);
+  }
+
+  .frame{
+    margin:28px auto 0;
+    max-width:340px;
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.04);
+    line-height:0;
+  }
+  .frame img,.frame svg{width:100%;height:auto;display:block}
+
+  .thedate{
+    font-family:var(--serif);
+    font-size:clamp(1.8rem,6.4vw,2.6rem);
+    line-height:1.15;
+    margin:30px 0 6px;
+    background:linear-gradient(100deg,var(--amber),var(--rose) 55%,var(--lilac));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .countdown{
+    margin:0;
+    color:var(--muted);
+  }
+  .locked-note{
+    margin:26px auto 0;
+    max-width:34ch;
+    color:var(--muted);
+  }
+  .share{
+    margin-top:26px;
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .ghost{
+    padding:13px 24px;
+    color:var(--cream);
+    background:transparent;
+    border:1px solid rgba(255,255,255,.24);
+  }
+  .ghost:hover{background:rgba(255,255,255,.07)}
+  .sent{
+    margin:14px 0 0;
+    font-size:.85rem;
+    color:var(--amber);
+    min-height:1.2em;
+  }
+
+  /* animated day loop (stand-in until a GIF is dropped in) */
+  .sun{animation:arc 9s ease-in-out infinite}
+  .stars{animation:night 9s ease-in-out infinite}
+  @keyframes arc{
+    0%{transform:translate(28px,58px);opacity:0}
+    12%{opacity:1}
+    50%{transform:translate(160px,-14px)}
+    88%{opacity:1}
+    100%{transform:translate(292px,58px);opacity:0}
+  }
+  @keyframes night{
+    0%,55%{opacity:0}
+    80%,100%{opacity:.9}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .primary:hover{transform:none}
+    #glitter{display:none}
+    #no{transition:left .01s,top .01s}
+    .sun,.stars{animation:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="glitter" aria-hidden="true"></canvas>
+<main class="wrap">
+
+  <p class="to">For Ladoo</p>
+  <h1>Give me <span class="arc">one whole day.</span></h1>
+  <p class="lede">Not a call squeezed between things. The entire day, on the same screen, no plan needed.</p>
+
+  <section class="span" id="span" aria-label="How long the day runs">
+    <div class="end">
+      <p class="marker">From</p>
+      <p class="line">your first sleepy hello of the morning</p>
+    </div>
+    <div class="end">
+      <p class="marker">To</p>
+      <p class="line">whatever hour one of us finally falls asleep</p>
+    </div>
+  </section>
+
+  <p class="note" id="note">We'll figure out the middle as we go. That's the fun part.</p>
+
+  <section class="step" id="ask">
+    <h2>So, will you?</h2>
+    <p>One tap and the day is booked.</p>
+
+    <div class="field" id="field">
+      <button id="yes" class="primary" type="button">Yes, all day</button>
+      <button id="no" type="button">No</button>
+    </div>
+    <p class="hint" id="hint">The no button is decorative. Take your time with it.</p>
+  </section>
+
+  <section class="step" id="pick">
+    <h2>Now pick the day.</h2>
+    <p>Choose a date and press enter. Whatever you pick, I'm keeping free.</p>
+
+    <div class="picker">
+      <input type="date" id="date" aria-label="Pick the date">
+      <button id="enter" class="primary" type="button">Enter</button>
+    </div>
+    <p class="error" id="error" role="alert"></p>
+  </section>
+
+  <section class="step" id="locked" aria-live="polite">
+    <span class="stamp">It's a date</span>
+
+    <div class="frame" id="frame">
+      <svg viewBox="0 0 320 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A day passing from sunrise to night">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a1a4e"/>
+            <stop offset="100%" stop-color="#3a2159"/>
+          </linearGradient>
+          <linearGradient id="disc" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f2b45c"/>
+            <stop offset="100%" stop-color="#e2757f"/>
+          </linearGradient>
+        </defs>
+        <rect width="320" height="170" fill="url(#sky)"/>
+        <g class="stars" fill="#f6ece1">
+          <circle cx="46" cy="34" r="1.5"/><circle cx="94" cy="20" r="1"/>
+          <circle cx="150" cy="42" r="1.3"/><circle cx="212" cy="26" r="1"/>
+          <circle cx="266" cy="46" r="1.6"/><circle cx="288" cy="18" r="1"/>
+          <circle cx="122" cy="66" r="1"/><circle cx="184" cy="60" r="1.2"/>
+        </g>
+        <g class="sun"><circle r="17" fill="url(#disc)"/></g>
+        <path d="M0 128 Q60 112 120 126 T240 122 T320 132 L320 170 L0 170 Z" fill="#1b1136"/>
+        <path d="M0 142 Q80 130 168 144 T320 140 L320 170 L0 170 Z" fill="#150e2b"/>
+      </svg>
+    </div>
+
+    <p class="thedate" id="thedate"></p>
+    <p class="countdown" id="countdown"></p>
+    <p class="locked-note">Locked in. Nothing else to press, nothing to change. I'll be there from the first hello.</p>
+
+    <div class="share" id="share">
+      <button class="ghost" id="wa" type="button">Send it to Jitendra</button>
+      <button class="ghost" id="copy" type="button">Copy the link</button>
+    </div>
+    <p class="sent" id="sent"></p>
+  </section>
+
+</main>
+
+<script>
+(function(){
+  /* ============================================================
+     DROP YOUR OWN GIF HERE
+     Paste a direct .gif link (or a base64 data: URI) between the
+     quotes. Leave it empty to keep the built-in animation.
+     ============================================================ */
+  var GIF_URL = "";
+
+  var KEY = 'ladoo-day';
+
+  var field = document.getElementById('field');
+  var no    = document.getElementById('no');
+  var yes   = document.getElementById('yes');
+  var hint  = document.getElementById('hint');
+  var ask   = document.getElementById('ask');
+  var pick  = document.getElementById('pick');
+  var lock  = document.getElementById('locked');
+  var span  = document.getElementById('span');
+  var note  = document.getElementById('note');
+  var input = document.getElementById('date');
+  var enter = document.getElementById('enter');
+  var error = document.getElementById('error');
+
+  /* ---------- the dodging no button ---------- */
+  var lines = ["No","No?","Are you sure","Think again","Not an option","Wrong button","Try the big one","It's rigged, love","Still no luck","Just say yes"];
+  var i = 0, scale = 1, yesScale = 1;
+
+  function dodge(){
+    var fw = field.clientWidth, fh = field.clientHeight;
+    var bw = no.offsetWidth, bh = no.offsetHeight;
+    var yr = yes.getBoundingClientRect(), fr = field.getBoundingClientRect();
+    var yx = yr.left - fr.left + yr.width/2, yy = yr.top - fr.top + yr.height/2;
+
+    var x, y, tries = 0;
+    do{
+      x = bw/2 + 6 + Math.random() * Math.max(1, fw - bw - 12);
+      y = bh/2 + 6 + Math.random() * Math.max(1, fh - bh - 12);
+      tries++;
+    } while(tries < 24 && Math.abs(x - yx) < (yr.width + bw)/2 + 14 && Math.abs(y - yy) < (yr.height + bh)/2 + 14);
+
+    no.style.left = x + 'px';
+    no.style.top  = y + 'px';
+    i++;
+    no.textContent = lines[Math.min(i, lines.length - 1)];
+    scale = Math.max(.55, scale - .045);
+    no.style.transform = 'translate(-50%,-50%) scale(' + scale + ')';
+    yesScale = Math.min(1.18, yesScale + .022);
+    yes.style.transform = 'scale(' + yesScale + ')';
+    if(i >= 3) hint.classList.add('show');
+  }
+
+  ['mouseenter','mouseover','pointerdown','touchstart','focus'].forEach(function(ev){
+    no.addEventListener(ev, function(e){ e.preventDefault(); dodge(); }, {passive:false});
+  });
+  no.addEventListener('click', function(e){ e.preventDefault(); dodge(); });
+  no.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); dodge(); }
+  });
+  field.addEventListener('mousemove', function(e){
+    var r = no.getBoundingClientRect();
+    var dx = e.clientX - (r.left + r.width/2);
+    var dy = e.clientY - (r.top + r.height/2);
+    if(Math.sqrt(dx*dx + dy*dy) < 95) dodge();
+  });
+
+  /* ---------- glitter rain ---------- */
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var canvas = document.getElementById('glitter');
+  var ctx = canvas.getContext('2d');
+  var colors = ['#f2b45c','#e2757f','#a98fd6','#f6ece1','#ffd9a0'];
+  var flakes = [], W = 0, H = 0, dpr = 1;
+
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function flake(top){
+    return {
+      x: Math.random() * W,
+      y: top ? -10 - Math.random() * H * .3 : Math.random() * H,
+      s: 1.2 + Math.random() * 2.6,
+      vy: .18 + Math.random() * .55,
+      drift: (Math.random() - .5) * .35,
+      sway: Math.random() * Math.PI * 2,
+      swaySpeed: .008 + Math.random() * .016,
+      spin: (Math.random() - .5) * .06,
+      a: Math.random() * Math.PI,
+      twinkle: .004 + Math.random() * .012,
+      phase: Math.random() * Math.PI * 2,
+      c: colors[(Math.random() * colors.length) | 0],
+      burst: false
+    };
+  }
+  function seed(){
+    var count = Math.round(Math.min(150, Math.max(50, W * H / 9000)));
+    flakes = [];
+    for(var n = 0; n < count; n++) flakes.push(flake(false));
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(var n = flakes.length - 1; n >= 0; n--){
+      var f = flakes[n];
+      f.sway += f.swaySpeed;
+      f.x += f.drift + Math.sin(f.sway) * .5;
+      f.y += f.vy;
+      f.a += f.spin;
+      f.phase += f.twinkle * 12;
+      if(f.y > H + 12){
+        if(f.burst){ flakes.splice(n,1); continue; }
+        f.y = -12; f.x = Math.random() * W;
+      }
+      if(f.x < -14) f.x = W + 12;
+      if(f.x > W + 14) f.x = -12;
+      var glow = .35 + .65 * Math.abs(Math.sin(f.phase));
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      ctx.rotate(f.a);
+      ctx.globalAlpha = glow * (f.burst ? .95 : .7);
+      ctx.fillStyle = f.c;
+      ctx.fillRect(-f.s/2, -f.s/2, f.s, f.s * 1.7);
+      ctx.restore();
+    }
+    requestAnimationFrame(draw);
+  }
+  function burst(count){
+    if(calm) return;
+    for(var n = 0; n < (count || 160); n++){
+      var f = flake(true);
+      f.s = 1.6 + Math.random() * 3.4;
+      f.vy = .8 + Math.random() * 2.4;
+      f.burst = true;
+      flakes.push(f);
+    }
+  }
+  if(!calm){
+    resize(); seed(); draw();
+    var t;
+    window.addEventListener('resize', function(){
+      clearTimeout(t);
+      t = setTimeout(function(){ resize(); seed(); }, 200);
+    });
+  }
+
+  /* ---------- dates ---------- */
+  function pretty(iso){
+    var p = iso.split('-');
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function daysAway(iso){
+    var p = iso.split('-');
+    var target = new Date(+p[0], +p[1] - 1, +p[2]);
+    var now = new Date();
+    target.setHours(0,0,0,0); now.setHours(0,0,0,0);
+    return Math.round((target - now) / 86400000);
+  }
+  function todayISO(){
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  /* ---------- freeze ---------- */
+  function freeze(iso, celebrate){
+    try{ localStorage.setItem(KEY, iso); }catch(e){}
+    if(location.hash.indexOf('d=') === -1){
+      history.replaceState(null, '', location.pathname + location.search + '#d=' + iso);
+    }
+
+    if(GIF_URL){
+      document.getElementById('frame').innerHTML =
+        '<img src="' + GIF_URL + '" alt="">';
+    }
+
+    document.getElementById('thedate').textContent = pretty(iso);
+    var n = daysAway(iso);
+    document.getElementById('countdown').textContent =
+      n > 1  ? n + ' days from now.' :
+      n === 1 ? 'Tomorrow.' :
+      n === 0 ? 'That is today.' :
+      'That one already happened. Worth repeating.';
+
+    span.style.display = 'none';
+    note.style.display = 'none';
+    ask.style.display  = 'none';
+    pick.classList.remove('show');
+    pick.style.display = 'none';
+    lock.classList.add('show');
+    if(celebrate){
+      burst(200);
+      lock.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+  }
+
+  /* ---------- flow ---------- */
+  yes.addEventListener('click', function(){
+    ask.style.display = 'none';
+    span.style.display = 'none';
+    note.style.display = 'none';
+    pick.classList.add('show');
+    burst(120);
+    input.min = todayISO();
+    pick.scrollIntoView({behavior:'smooth', block:'center'});
+    setTimeout(function(){ input.focus(); }, 400);
+  });
+
+  function submit(){
+    if(!input.value){
+      error.textContent = 'Pick a day first, then press enter.';
+      input.focus();
+      return;
+    }
+    error.textContent = '';
+    freeze(input.value, true);
+  }
+  enter.addEventListener('click', submit);
+  input.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); submit(); }
+  });
+
+  /* ---------- send it back ---------- */
+  function linkFor(){
+    var iso = localStorage.getItem(KEY) || (location.hash.split('d=')[1] || '');
+    return location.origin + location.pathname + location.search + '#d=' + iso;
+  }
+  document.getElementById('wa').addEventListener('click', function(){
+    var iso = localStorage.getItem(KEY) || (location.hash.split('d=')[1] || '');
+    var msg = 'I picked ' + pretty(iso) + '. That is our whole day. ' + linkFor();
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+  });
+  document.getElementById('copy').addEventListener('click', function(){
+    var iso = localStorage.getItem(KEY) || (location.hash.split('d=')[1] || '');
+    var msg = 'I picked ' + pretty(iso) + '. ' + linkFor();
+    var done = function(){ document.getElementById('sent').textContent = 'Copied. Now send it to him.'; };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(msg).then(done, done);
+    }else{
+      var ta = document.createElement('textarea');
+      ta.value = msg; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); }catch(e){}
+      ta.remove(); done();
+    }
+  });
+
+  /* ---------- on load ---------- */
+  if(location.hash === '#reset'){
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+  var fromLink = (location.hash.match(/d=(\d{4}-\d{2}-\d{2})/) || [])[1];
+  var stored = null;
+  try{ stored = localStorage.getItem(KEY); }catch(e){}
+  var existing = fromLink || stored;
+  if(existing) freeze(existing, false);
+})();
+</script>
+</body>
+</html>
