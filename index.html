@@ -350,7 +350,7 @@
   }
 
   .share{
-    margin-top:26px;
+    margin-top:18px;
     display:flex;
     gap:10px;
     justify-content:center;
@@ -528,6 +528,12 @@
 
     <p class="thedate" id="thedate"></p>
     <p class="countdown" id="countdown"></p>
+
+    <div class="share" id="share">
+      <button class="ghost" id="copy" type="button">Copy the date &amp; send it to Jitendra</button>
+    </div>
+    <p class="sent" id="sent"></p>
+
     <p class="locked-note">Locked in. Change the day whenever you like &mdash; I'll be there from the first hello, whichever one you pick.</p>
 
     <div class="heads-up">
@@ -535,11 +541,6 @@
       Get ready for some exciting things &mdash; and keep your laptop nearby,
       with the Chrome browser installed and ready to go.
     </div>
-
-    <div class="share" id="share">
-      <button class="ghost" id="copy" type="button">Copy the date &amp; send it to Jitendra</button>
-    </div>
-    <p class="sent" id="sent"></p>
   </section>
 
 </main>
@@ -581,7 +582,16 @@
     "Okay okay okay",
     "...fine"
   ];
-  var FACES = ["😅","😳","😬","🤭","😰","🫠","😵‍💫","😮‍💨","😖","😭","🏳️"];
+  /* once the opening escalation runs out it keeps going forever, so there is
+     always something new on it however long she plays */
+  var LOOP = [
+    "Nope","Missed me","Too slow","Not today","Nice try","Over here",
+    "Still no","Never","Not a chance","Keep trying","Almost","So close",
+    "Nuh uh","Wrong again","Not happening","You cannot catch me",
+    "This is my whole life now","I do this all day","Try the gold one",
+    "Getting warmer","Colder","Still colder"
+  ];
+  var FACES = ["😅","😳","😬","🤭","😰","🫠","😵‍💫","😮‍💨","😖","😭","🙃","😜","😝","🤪","😎","🥳"];
   var HINTS = [
     "",
     "",
@@ -595,10 +605,22 @@
     "Respect for the commitment, honestly.",
     "It's running out of places to hide.",
     "One more and I think it breaks.",
-    "It gave up and left. There was only ever one answer."
+    "It has no intention of stopping. Neither should you."
+  ];
+  var LOOP_HINTS = [
+    "It could do this all day.",
+    "Still going. It is enjoying itself.",
+    "There is no ending to find here.",
+    "The gold one is the only one that works.",
+    "It will outlast you. Fondly.",
+    "Play as long as you like."
   ];
 
-  var i = 0, scale = 1, yesScale = 1, spent = false, noPressAt = 0;
+  var i = 0, scale = 1, yesScale = 1, noPressAt = 0, lastDodgeAt = 0, pointerKind = 'mouse';
+
+  document.addEventListener('pointerdown', function(e){
+    if(e.pointerType) pointerKind = e.pointerType;
+  }, true);
 
   function setNo(s, r){
     no.style.setProperty('--s', s);
@@ -617,8 +639,6 @@
   }
 
   function dodge(){
-    if(spent) return;
-
     var fw = field.clientWidth, fh = field.clientHeight;
     var bw = no.offsetWidth, bh = no.offsetHeight;
 
@@ -640,10 +660,17 @@
     no.style.top  = y + 'px';
 
     i++;
-    no.textContent = LINES[Math.min(i, LINES.length - 1)];
+    lastDodgeAt = Date.now();
 
-    /* it shrinks, and starts tilting once it panics */
-    scale = Math.max(.5, scale - .042);
+    /* the scripted escalation first, then an endless supply of cheek */
+    if(i < LINES.length){
+      no.textContent = LINES[i];
+    }else{
+      no.textContent = LOOP[(i - LINES.length) % LOOP.length];
+    }
+
+    /* it shrinks while it panics, then settles and just keeps dancing */
+    scale = Math.max(.62, scale - .042);
     var rot = i < 3 ? 0 : (Math.random() * 26 - 13);
     setNo(scale, rot);
 
@@ -659,25 +686,15 @@
     /* give the chase more room as it goes on */
     field.style.minHeight = Math.min(320, 230 + i * 8) + 'px';
 
-    var h = HINTS[Math.min(i, HINTS.length - 1)];
+    var h = i < HINTS.length
+      ? HINTS[i]
+      : LOOP_HINTS[((i - HINTS.length) / 4 | 0) % LOOP_HINTS.length];
     if(h){ hint.textContent = h; hint.classList.add('show'); }
-
-    if(i >= LINES.length - 1) vanish();
   }
 
-  /* it runs out of steam and leaves for good */
-  function vanish(){
-    spent = true;
-    setTimeout(function(){
-      var r = no.getBoundingClientRect(), fr = field.getBoundingClientRect();
-      puff(r.left - fr.left + r.width/2, r.top - fr.top + r.height/2, '🏳️');
-      no.classList.add('gone');
-      hint.textContent = HINTS[HINTS.length - 1];
-      hint.classList.add('show');
-      burst(70);
-      setTimeout(function(){ no.style.display = 'none'; }, 450);
-    }, 380);
-  }
+  /* only a real pointer hovers; on a touch screen the tap's compatibility
+     mousemove would otherwise make it dodge and swallow a genuine yes */
+  var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   /* It is a <span>, aria-hidden and not focusable, so it cannot be pressed,
      tabbed to, or activated by keyboard, and it never submits anything.
@@ -695,7 +712,7 @@
   });
 
   field.addEventListener('mousemove', function(e){
-    if(spent) return;
+    if(!canHover) return;
     var r = no.getBoundingClientRect();
     var dx = e.clientX - (r.left + r.width/2);
     var dy = e.clientY - (r.top + r.height/2);
@@ -706,7 +723,6 @@
      tap lands on the field it never reaches the button itself */
   ['pointerdown','touchstart'].forEach(function(ev){
     field.addEventListener(ev, function(e){
-      if(spent) return;
       if(e.target === yes || yes.contains(e.target)) return;
       var t = (e.touches && e.touches[0]) ? e.touches[0] : e;
       if(typeof t.clientX !== 'number') return;
@@ -885,6 +901,10 @@
   yes.addEventListener('click', function(){
     /* a press that began on the no button must never land here as a yes */
     if(Date.now() - noPressAt < 500) return;
+    /* on touch there is no hover, so the only thing that makes it dodge is a
+       tap aimed at it -- a yes arriving right after one is an overshoot from
+       chasing it, not a real answer */
+    if(pointerKind !== 'mouse' && Date.now() - lastDodgeAt < 450) return;
     freeze(null, true);
     setTimeout(function(){ input.focus(); }, 600);
   });
