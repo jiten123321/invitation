@@ -773,6 +773,7 @@
     if(!iso){
       dateEl.style.display = 'none';
       countEl.style.display = 'none';
+      lineEl.style.display = '';
       lineEl.textContent = 'Now add the day you want.';
       return;
     }
@@ -786,7 +787,7 @@
       n === 1 ? 'Tomorrow.' :
       n === 0 ? 'That is today.' :
       'That one already happened. Worth repeating.';
-    lineEl.textContent = 'Change it whenever you like.';
+    lineEl.style.display = 'none';
   }
 
   /* she picks the day right here on the locked screen */
