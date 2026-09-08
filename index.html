@@ -19,6 +19,7 @@
 
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   body{
     background:var(--night);
     background-image:
@@ -48,7 +49,10 @@
     width:100%;
     max-width:640px;
     margin:0 auto;
-    padding:clamp(56px,12vw,110px) 22px 80px;
+    padding:clamp(44px,11vw,110px)
+            max(18px, env(safe-area-inset-right))
+            calc(72px + env(safe-area-inset-bottom))
+            max(18px, env(safe-area-inset-left));
   }
 
   .to{
@@ -151,6 +155,8 @@
     font-size:1rem;
     cursor:pointer;
     border-radius:999px;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
     transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
   }
   button:focus-visible{
@@ -259,8 +265,12 @@
     border:1px solid rgba(255,255,255,.24);
     border-radius:14px;
     padding:16px 18px;
-    min-width:210px;
+    width:100%;
+    max-width:260px;
+    min-height:56px;
     text-align:center;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
   }
   input[type="date"]:focus{
     outline:none;
@@ -318,6 +328,27 @@
     max-width:34ch;
     color:var(--muted);
   }
+  .heads-up{
+    margin:24px auto 0;
+    max-width:34ch;
+    padding:16px 18px;
+    border:1px solid rgba(242,180,92,.34);
+    background:rgba(242,180,92,.08);
+    border-radius:16px;
+    color:var(--cream);
+    font-size:.95rem;
+    line-height:1.55;
+    text-align:left;
+  }
+  .heads-up strong{
+    display:block;
+    margin-bottom:3px;
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:1.06rem;
+    color:var(--amber);
+  }
+
   .share{
     margin-top:26px;
     display:flex;
@@ -352,6 +383,18 @@
   @keyframes night{
     0%,55%{opacity:0}
     80%,100%{opacity:.9}
+  }
+
+  @media (max-width:380px){
+    .ghost{width:100%;padding:15px 16px;font-size:.96rem}
+    .primary{padding:17px 32px}
+    .frame{max-width:100%}
+    .heads-up{font-size:.92rem;padding:14px 16px}
+  }
+
+  /* short screens: don't let the chase area eat the whole viewport */
+  @media (max-height:680px){
+    .field{min-height:200px}
   }
 
   @media (prefers-reduced-motion:reduce){
@@ -432,6 +475,12 @@
     <p class="thedate" id="thedate"></p>
     <p class="countdown" id="countdown"></p>
     <p class="locked-note">Locked in. Change the day whenever you like &mdash; I'll be there from the first hello, whichever one you pick.</p>
+
+    <div class="heads-up">
+      <strong>One small thing</strong>
+      Get ready for some exciting things &mdash; and keep your laptop nearby,
+      with the Chrome browser installed and ready to go.
+    </div>
 
     <div class="share" id="share">
       <button class="ghost" id="copy" type="button">Copy the date &amp; send it to Jitendra</button>
