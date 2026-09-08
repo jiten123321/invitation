@@ -173,6 +173,7 @@
     position:relative;
     min-height:230px;
     margin-top:26px;
+    transition:min-height .35s ease;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -181,7 +182,7 @@
     position:absolute;
     left:50%;
     top:calc(50% + 74px);
-    transform:translate(-50%,-50%);
+    transform:translate(-50%,-50%) scale(var(--s,1)) rotate(var(--r,0deg));
     padding:13px 30px;
     color:var(--muted);
     background:transparent;
@@ -201,6 +202,35 @@
     text-align:center;
   }
   .hint.show{opacity:1}
+
+  /* ---------- no button personality ---------- */
+  #no.won{
+    color:#2a1608;
+    background:linear-gradient(135deg,var(--amber),#f6cf8e);
+    border-color:transparent;
+    font-weight:600;
+    box-shadow:0 12px 34px rgba(242,180,92,.3);
+  }
+  #no.jelly{animation:jelly .5s ease}
+  @keyframes jelly{
+    0%{transform:translate(-50%,-50%) scale(var(--s,1)) rotate(var(--r,0deg))}
+    30%{transform:translate(-50%,-50%) scale(calc(var(--s,1) * 1.2),calc(var(--s,1) * .8)) rotate(var(--r,0deg))}
+    62%{transform:translate(-50%,-50%) scale(calc(var(--s,1) * .86),calc(var(--s,1) * 1.14)) rotate(var(--r,0deg))}
+    100%{transform:translate(-50%,-50%) scale(var(--s,1)) rotate(var(--r,0deg))}
+  }
+  .puff{
+    position:absolute;
+    z-index:3;
+    pointer-events:none;
+    font-size:1.4rem;
+    line-height:1;
+    animation:puffUp .95s ease-out forwards;
+  }
+  @keyframes puffUp{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(0deg)}
+    22%{opacity:1;transform:translate(-50%,-100%) scale(1.15) rotate(-8deg)}
+    100%{opacity:0;transform:translate(-50%,-200%) scale(.8) rotate(10deg)}
+  }
 
   /* ---------- date picker ---------- */
   #pick{display:none}
@@ -326,6 +356,8 @@
     .primary:hover{transform:none}
     #glitter{display:none}
     #no{transition:left .01s,top .01s}
+    #no.jelly{animation:none}
+    .puff{display:none}
     .sun,.stars{animation:none}
   }
 </style>
@@ -421,7 +453,7 @@
      Paste a direct .gif link (or a base64 data: URI) between the
      quotes. Leave it empty to keep the built-in animation.
      ============================================================ */
-  var GIF_URL = "";
+  var GIF_URL = "besito-catlove.gif";
 
   var KEY = 'ladoo-day';
 
@@ -439,12 +471,66 @@
   var error = document.getElementById('error');
 
   /* ---------- the dodging no button ---------- */
-  var lines = ["No","No?","Are you sure","Think again","Not an option","Wrong button","Try the big one","It's rigged, love","Still no luck","Just say yes"];
-  var i = 0, scale = 1, yesScale = 1;
+  var LINES = [
+    "No",
+    "No?",
+    "Are you sure?",
+    "Think again",
+    "Not an option",
+    "Wrong button, love",
+    "Try the big one",
+    "This one's rigged",
+    "Still no",
+    "You're persistent",
+    "I'm getting tired",
+    "Okay okay okay",
+    "...fine"
+  ];
+  var FACES = ["😅","😳","😬","🤭","😰","🫠","😵‍💫","😮‍💨","😖","😭","🏳️"];
+  var HINTS = [
+    "",
+    "",
+    "It moved. That was not a glitch.",
+    "The no button is decorative. Take your time with it.",
+    "It's faster than it looks.",
+    "You can keep going. It can keep running.",
+    "Genuinely, it is shrinking out of fear.",
+    "Seven attempts. The other button is right there.",
+    "It's starting to sweat.",
+    "Respect for the commitment, honestly.",
+    "It's running out of places to hide.",
+    "One more and I think it breaks.",
+    "It gave up. Both buttons say yes now."
+  ];
+
+  var i = 0, scale = 1, yesScale = 1, surrendered = false;
+
+  function setNo(s, r){
+    no.style.setProperty('--s', s);
+    no.style.setProperty('--r', r + 'deg');
+  }
+
+  function puff(x, y){
+    if(calm) return;
+    var el = document.createElement('span');
+    el.className = 'puff';
+    el.textContent = FACES[Math.min(i - 1, FACES.length - 1)] || FACES[0];
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+    field.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 1000);
+  }
 
   function dodge(){
+    if(surrendered) return;
+
     var fw = field.clientWidth, fh = field.clientHeight;
     var bw = no.offsetWidth, bh = no.offsetHeight;
+
+    /* leave a little reaction behind at the spot it just fled */
+    var nr = no.getBoundingClientRect(), fr0 = field.getBoundingClientRect();
+    if(i > 0) puff(nr.left - fr0.left + nr.width/2, nr.top - fr0.top + nr.height/2);
+
     var yr = yes.getBoundingClientRect(), fr = field.getBoundingClientRect();
     var yx = yr.left - fr.left + yr.width/2, yy = yr.top - fr.top + yr.height/2;
 
@@ -457,23 +543,70 @@
 
     no.style.left = x + 'px';
     no.style.top  = y + 'px';
+
     i++;
-    no.textContent = lines[Math.min(i, lines.length - 1)];
-    scale = Math.max(.55, scale - .045);
-    no.style.transform = 'translate(-50%,-50%) scale(' + scale + ')';
-    yesScale = Math.min(1.18, yesScale + .022);
+    no.textContent = LINES[Math.min(i, LINES.length - 1)];
+
+    /* it shrinks, and starts tilting once it panics */
+    scale = Math.max(.5, scale - .042);
+    var rot = i < 3 ? 0 : (Math.random() * 26 - 13);
+    setNo(scale, rot);
+
+    /* squish on landing */
+    no.classList.remove('jelly');
+    void no.offsetWidth;
+    no.classList.add('jelly');
+
+    /* the yes button quietly grows more inviting */
+    yesScale = Math.min(1.22, yesScale + .022);
     yes.style.transform = 'scale(' + yesScale + ')';
-    if(i >= 3) hint.classList.add('show');
+
+    /* give the chase more room as it goes on */
+    field.style.minHeight = Math.min(320, 230 + i * 8) + 'px';
+
+    var h = HINTS[Math.min(i, HINTS.length - 1)];
+    if(h){ hint.textContent = h; hint.classList.add('show'); }
+
+    if(i >= LINES.length - 1) surrender();
+  }
+
+  /* it runs out of steam and joins the other side */
+  function surrender(){
+    surrendered = true;
+    setTimeout(function(){
+      no.classList.add('won');
+      no.textContent = 'Okay fine — yes';
+      scale = 1;
+      setNo(1, 0);
+      no.style.left = '50%';
+      no.style.top  = 'calc(50% + 74px)';
+      hint.textContent = HINTS[HINTS.length - 1];
+      hint.classList.add('show');
+      burst(70);
+    }, 420);
   }
 
   ['mouseenter','mouseover','pointerdown','touchstart','focus'].forEach(function(ev){
-    no.addEventListener(ev, function(e){ e.preventDefault(); dodge(); }, {passive:false});
+    no.addEventListener(ev, function(e){
+      if(surrendered) return;
+      e.preventDefault();
+      dodge();
+    }, {passive:false});
   });
-  no.addEventListener('click', function(e){ e.preventDefault(); dodge(); });
+  no.addEventListener('click', function(e){
+    e.preventDefault();
+    if(surrendered){ yes.click(); return; }
+    dodge();
+  });
   no.addEventListener('keydown', function(e){
-    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); dodge(); }
+    if(e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      if(surrendered){ yes.click(); return; }
+      dodge();
+    }
   });
   field.addEventListener('mousemove', function(e){
+    if(surrendered) return;
     var r = no.getBoundingClientRect();
     var dx = e.clientX - (r.left + r.width/2);
     var dy = e.clientY - (r.top + r.height/2);
@@ -589,7 +722,7 @@
 
     if(GIF_URL){
       document.getElementById('frame').innerHTML =
-        '<img src="' + GIF_URL + '" alt="">';
+        '<img src="' + GIF_URL + '" alt="A little kiss, for you">';
     }
 
     document.getElementById('thedate').textContent = pretty(iso);
@@ -614,6 +747,7 @@
 
   /* ---------- flow ---------- */
   yes.addEventListener('click', function(){
+    if(GIF_URL){ var pre = new Image(); pre.src = GIF_URL; }
     ask.style.display = 'none';
     span.style.display = 'none';
     note.style.display = 'none';
